@@ -92,11 +92,4 @@ Mapeamento de Cores (Thresholds):
 
 4. Documentação e Referências
 
-Conforme solicitado para o projeto acadêmico, seguem as referências formatadas e as citações baseadas no documento objetos_inteligentes_conectados.pdf.
-
-Citações para o Trabalho
-
-"A qualidade do ar é um dos principais fatores que afetam o bem-estar da população em grandes metrópoles. Em São Paulo, a poluição atmosférica é marcada por ser um dos maiores desafios ambientais e de saúde pública." (Igari et al., 2025, p. 1).
-
-"O projeto busca demonstrar como soluções de Internet das Coisas (IoT) podem auxiliar a sociedade ao fornecer dados acessíveis e em tempo real sobre a qualidade do ar, promovendo conscientização e subsidiando políticas públicas." (Igari et al., 2025, p. 1).
 
