@@ -1,95 +1,55 @@
-Projeto IoT: Monitoramento da Qualidade do Ar em São Paulo
+Sistema IoT para Monitoramento da Qualidade do Ar em SP
 
-Este documento descreve a implementação técnica do sistema de monitoramento de qualidade do ar, integrando sensores virtuais (ESP32), API externa (OpenWeather), processamento em Node-RED, armazenamento em InfluxDB e visualização em Grafana.
+Este projeto visa monitorar a qualidade do ar na cidade de São Paulo utilizando conceitos de Internet das Coisas (IoT). O sistema integra dados de sensores locais simulados (ESP32) com dados oficiais de APIs externas, processando as informações para avaliação de riscos à saúde conforme padrões ambientais.
 
-1. Arquitetura da Solução
+ Tecnologias Utilizadas
 
-Fontes de Dados:
+Node-RED: Orquestração do fluxo de dados e regras de negócio (Low-code).
 
-API OpenWeather: Fornece dados reais de qualidade do ar (PM2.5, PM10, CO, etc.) para a latitude/longitude de São Paulo.
+ESP32 (Simulado): Coleta de dados de sensores via MQTT.
 
-Arduino Virtual (Wokwi + ESP32): Simula um sensor local enviando dados via MQTT.
+OpenWeather API: Fonte de dados meteorológicos e de poluição em tempo real.
 
-Middleware (Node-RED):
+InfluxDB: Banco de dados temporal para armazenamento histórico.
 
-Assina tópicos MQTT do ESP32.
+Grafana: Visualização de dados (Dashboards).
 
-Realiza requisições HTTP periódicas à API.
+Funcionalidades
 
-Aplica Regras de Negócio (Avaliação da qualidade: Bom, Moderado, Ruim).
+Coleta Híbrida: Recebe dados tanto de sensores físicos (simulados) quanto de fontes oficiais.
 
-Formata e envia dados para o banco.
+Semáforo de Qualidade: Classificação automática do ar em "Bom", "Moderado" ou "Ruim" baseada no índice AQI.
 
-Armazenamento (InfluxDB): Banco de dados de séries temporais.
+Alertas: Envio de comandos de alerta para o dispositivo IoT em casos críticos.
 
-Visualização (Grafana): Dashboards para análise histórica e tempo real.
+Dashboard: Monitoramento visual com histórico e indicadores em tempo real.
 
-2. Configuração do Node-RED
+ Referências Bibliográficas
 
-O Node-RED atua como o "cérebro" da operação. Ele possui três responsabilidades principais:
+As referências abaixo foram utilizadas para embasar os critérios de classificação da qualidade do ar e o alinhamento com objetivos de sustentabilidade globais.
 
-A. Coleta da API OpenWeather
+1. Padrões de Qualidade do Ar (Fonte Oficial)
 
-Nó Inject: Dispara a cada 10 ou 30 minutos.
+Base para a classificação (Bom/Ruim) utilizada no sistema.
 
-Nó HTTP Request:
+CETESB. Padrões de Qualidade do Ar. São Paulo: Companhia Ambiental do Estado de São Paulo. Disponível em: https://cetesb.sp.gov.br/ar/padroes-de-qualidade-do-ar/. Acesso em: 20 nov. 2025.
 
-URL: http://api.openweathermap.org/data/2.5/air_pollution?lat=-23.5505&lon=-46.6333&appid={SUA_API_KEY}
+2. Contexto Local (São Paulo)
 
-Método: GET
+Dados sobre a poluição veicular e industrial específica de SP.
 
-Nó Function: Extrai o índice AQI (Air Quality Index) e componentes poluentes.
+IEMA. Qualidade do Ar no Município de São Paulo: Nota Técnica. São Paulo: Instituto de Energia e Meio Ambiente, 2022. Disponível em: https://energiaeambiente.org.br/wp-content/uploads/2022/05/IEMA_notatecnica_aremSP.pdf. Acesso em: 20 nov. 2025.
 
-B. Coleta do Arduino (MQTT)
+3. Objetivos de Desenvolvimento Sustentável (ONU)
 
-Nó MQTT In: Conecta ao broker (ex: test.mosquitto.org ou local) no tópico sp/sensor/qualidade.
+Justificativa social do projeto (ODS 3 e 11).
 
-Nó JSON: Converte a string recebida em objeto JavaScript.
+ONU. Objetivo de Desenvolvimento Sustentável 3: Saúde e Bem-estar. Nações Unidas Brasil. Disponível em: https://brasil.un.org/pt-br/sdgs/3. Acesso em: 20 nov. 2025.
 
-C. Regra de Negócio (Semáforo)
+ONU. Objetivo de Desenvolvimento Sustentável 11: Cidades e Comunidades Sustentáveis. Nações Unidas Brasil. Disponível em: https://brasil.un.org/pt-br/sdgs/11. Acesso em: 20 nov. 2025.
 
-No Node-RED, aplicamos a lógica de classificação baseada no AQI (Índice de Qualidade do Ar):
+4. Impactos na Saúde
 
-AQI 1-2 (Ótimo/Bom): Status "Bom" (Cor Verde).
+Referência global sobre como a poluição afeta a saúde humana.
 
-AQI 3 (Moderado): Status "Moderado" (Cor Amarela).
-
-AQI 4-5 (Ruim/Péssimo): Status "Ruim" (Cor Vermelha).
-
-3. Configuração do Dashboard (Grafana)
-
-O Grafana deve ser conectado ao InfluxDB (DataSource) para gerar os painéis solicitados:
-
-Painel 1: Gráfico de Linha (Histórico)
-
-Tipo: Time Series.
-
-Query A: SELECT mean("aqi") FROM "ar_sp_api" WHERE time > now() - 24h GROUP BY time(1h) (Dados da API).
-
-Query B: SELECT mean("valor_sensor") FROM "ar_sp_sensor" WHERE time > now() - 24h GROUP BY time(1h) (Dados do Arduino).
-
-Objetivo: Comparar a "qualidade média" (sensor local) com a "qualidade oficial" (API) ao longo do tempo.
-
-Painel 2: Valor Atual (Gauge)
-
-Tipo: Gauge.
-
-Query: SELECT last("aqi") FROM "ar_sp_api".
-
-Objetivo: Mostrar o valor numérico instantâneo do AQI em SP.
-
-Painel 3: Semáforo (Stat / Traffic Light)
-
-Tipo: Stat (com Background Color habilitado) ou Plugin "Traffic Light".
-
-Mapeamento de Cores (Thresholds):
-
-0 a 2: Verde (Positivo/Ótimo).
-
-3: Amarelo (Neutro/Atenção).
-
-4 a 5: Vermelho (Negativo/Crítico).
-
-4. Documentação e Referências
-
-
+WORLD HEALTH ORGANIZATION (WHO). Ambient (outdoor) air pollution. 2024. Disponível em: https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-pollution. Acesso em: 20 nov. 2025.
