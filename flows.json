@@ -1,0 +1,306 @@
+[
+    {
+        "id": "tab_ar_sp",
+        "type": "tab",
+        "label": "Qualidade do Ar SP",
+        "disabled": false,
+        "info": "Fluxo para capturar dados da API OpenWeather e do MQTT (Wokwi), processar e enviar para InfluxDB."
+    },
+    {
+        "id": "inject_api",
+        "type": "inject",
+        "z": "tab_ar_sp",
+        "name": "Disparo 10min",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "http_openweather"
+            ]
+        ]
+    },
+    {
+        "id": "http_openweather",
+        "type": "http request",
+        "z": "tab_ar_sp",
+        "name": "API OpenWeather (Poluição)",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://api.openweathermap.org/data/2.5/air_pollution?lat=-23.5505&lon=-46.6333&appid=3fe93967aefc698f865170283cf0d0d2",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 380,
+        "y": 120,
+        "wires": [
+            [
+                "func_processa_api"
+            ]
+        ]
+    },
+    {
+        "id": "func_processa_api",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "Avaliação Qualidade (Regra)",
+        "func": "let aqi_final = 50;\nlet pm25_final = 12;\nlet status = \"Teste Inicial\";\nlet cor = \"Azul\";\n\nif (msg.payload && msg.payload.list && msg.payload.list[0]) {\n    let val = msg.payload.list[0].main.aqi;\n    let part = msg.payload.list[0].components.pm2_5;\n    \n    // Verifica se o valor é um número válido\n    if (val !== undefined && !isNaN(parseFloat(val))) {\n        aqi_final = parseFloat(val);\n        pm25_final = parseFloat(part);\n        \n        // Regra de Negócio (Semáforo)\n        if (aqi_final <= 2) {\n            status = \"Bom\";\n            cor = \"Verde\";\n        } else if (aqi_final == 3) {\n            status = \"Moderado\";\n            cor = \"Amarelo\";\n        } else {\n            status = \"Ruim\";\n            cor = \"Vermelho\";\n        }\n    }\n}\n\nmsg.payload = {\n    measurement: \"qualidade_ar_sp\",\n    tags: {\n        fonte: \"node_red_api\",\n    },\n    fields: {\n        aqi: aqi_final,\n        pm2_5: pm25_final,\n        status_desc: status,\n        cor_semaforo: cor\n    }\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 670,
+        "y": 120,
+        "wires": [
+            [
+                "debug_api",
+                "1ffcb3921e6e9659"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_in_sensor",
+        "type": "mqtt in",
+        "z": "tab_ar_sp",
+        "name": "Recebe ESP32",
+        "topic": "sp/sensor/qualidade",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "broker_mosquitto",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 280,
+        "wires": [
+            [
+                "func_processa_sensor"
+            ]
+        ]
+    },
+    {
+        "id": "func_processa_sensor",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "Filtra Dados Arduino",
+        "func": "let aqi_sensor = msg.payload.aqi;\nlet local = msg.payload.local;\n\n// Regra de Negócio para o Sensor Local\n// Supondo escala AQI padrão (0-500)\nlet status = \"Bom\";\nif (aqi_sensor > 50 && aqi_sensor <= 100) status = \"Moderado\";\nif (aqi_sensor > 100) status = \"Ruim\";\n\nmsg.payload = [\n    {\n        measurement: \"qualidade_ar_sp\",\n        tags: {\n            fonte: \"arduino_virtual\",\n            local: local\n        },\n        fields: {\n            aqi: aqi_sensor,\n            status_desc: status\n        }\n    }\n];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 280,
+        "wires": [
+            [
+                "debug_sensor",
+                "influx_db_out",
+                "check_alert"
+            ]
+        ]
+    },
+    {
+        "id": "debug_api",
+        "type": "debug",
+        "z": "tab_ar_sp",
+        "name": "Debug API",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 950,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "debug_sensor",
+        "type": "debug",
+        "z": "tab_ar_sp",
+        "name": "Debug Sensor",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "check_alert",
+        "type": "switch",
+        "z": "tab_ar_sp",
+        "name": "É Critico?",
+        "property": "payload[0].fields.aqi",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "150",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 340,
+        "y": 380,
+        "wires": [
+            [
+                "msg_alerta"
+            ]
+        ]
+    },
+    {
+        "id": "msg_alerta",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "Msg Alerta",
+        "func": "msg.payload = \"ALERTA\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 380,
+        "wires": [
+            [
+                "mqtt_out_comando"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_out_comando",
+        "type": "mqtt out",
+        "z": "tab_ar_sp",
+        "name": "Envia Comando ESP32",
+        "topic": "sp/comando/esp32",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "broker_mosquitto",
+        "x": 720,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "influx_db_out",
+        "type": "influxdb out",
+        "z": "tab_ar_sp",
+        "influxdb": "influx_config",
+        "name": "Salva no InfluxDB",
+        "measurement": "qualidade_ar_sp",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "organisation",
+        "bucket": "bucket",
+        "x": 870,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "1ffcb3921e6e9659",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "fields",
+        "func": "var dados = msg.payload.fields;\nvar tags = msg.payload.tags;\n\n// Define que o payload é APENAS os dados numéricos\nmsg.payload = dados;\n\n// Passa as tags separadas\nmsg.tags = tags;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 990,
+        "y": 180,
+        "wires": [
+            [
+                "influx_db_out"
+            ]
+        ]
+    },
+    {
+        "id": "broker_mosquitto",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Public",
+        "broker": "test.mosquitto.org",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "influx_config",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": "8086",
+        "protocol": "http",
+        "database": "iot_sp_ar",
+        "name": "iot_sp_ar",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "1.x",
+        "url": "http://localhost:8086",
+        "timeout": "",
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "15eac54652c2d2b4",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-influxdb": "0.7.0"
+        }
+    }
+]
