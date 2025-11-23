@@ -1,0 +1,75 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+
+// --- CONFIGURAÇÕES ---
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+const char* mqtt_server = "broker.hivemq.com"; 
+const int mqtt_port = 1883;
+
+// Tópico onde ele manda os dados
+const char* topic_publish = "sp/sensor/qualidade"; 
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+unsigned long lastMsg = 0;
+
+void setup_wifi() {
+  delay(10);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+}
+
+void callback(char* topic, byte* payload, unsigned int length) {
+  // Sensor não precisa receber nada
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    // NOME FIXO (Sem Random) para estabilidade
+    String clientId = "ESP32_SENSOR_FIXO_01"; 
+    
+    if (client.connect(clientId.c_str())) {
+      // Conectado com sucesso
+    } else {
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("--------------------------------");
+  Serial.println("LIGANDO O SISTEMA..."); // Agora ele vai falar isso na hora!
+  Serial.println("--------------------------------");
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+  client.setCallback(callback);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  unsigned long now = millis();
+  if (now - lastMsg > 5000) { // Envia a cada 5 segundos
+    lastMsg = now;
+    
+    // Simulação de valor
+    int aqi_simulado = random(10, 200); 
+    
+   
+    String msg_json = "{";
+    msg_json += "\"local\": \"Paulista\",";
+    msg_json += "\"aqi_novo\": " + String(aqi_simulado); 
+    msg_json += "}";
+
+    client.publish(topic_publish, msg_json.c_str());
+  }
+}
