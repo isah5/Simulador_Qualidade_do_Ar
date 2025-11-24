@@ -1,0 +1,371 @@
+[
+    {
+        "id": "inject_api",
+        "type": "inject",
+        "z": "tab_ar_sp",
+        "name": "Disparo 10min",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "600",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 260,
+        "wires": [
+            [
+                "http_openweather"
+            ]
+        ]
+    },
+    {
+        "id": "http_openweather",
+        "type": "http request",
+        "z": "tab_ar_sp",
+        "name": "API OpenWeather (Poluição)",
+        "method": "GET",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://api.openweathermap.org/data/2.5/air_pollution?lat=-23.5505&lon=-46.6333&appid=3fe93967aefc698f865170283cf0d0d2",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 360,
+        "y": 260,
+        "wires": [
+            [
+                "func_processa_api"
+            ]
+        ]
+    },
+    {
+        "id": "func_processa_api",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "Avaliação Qualidade (Regra)",
+        "func": "let aqi_final = 0;\nlet pm25_final = 0;\n\n// Verifica se a estrutura da API existe\nif (msg.payload && msg.payload.list && msg.payload.list[0]) {\n\n    let val = msg.payload.list[0].main.aqi;\n    let part = msg.payload.list[0].components.pm2_5;\n\n    if (val !== undefined && !isNaN(parseFloat(val))) {\n        aqi_final = parseFloat(val);\n    }\n\n    if (part !== undefined && !isNaN(parseFloat(part))) {\n        pm25_final = parseFloat(part);\n    }\n}\n\n// Salva no global para a fusão\nglobal.set(\"last_api\", {\n    aqi: aqi_final,\n    pm25: pm25_final\n});\n\n// Define tópico para o JOIN\nmsg.topic = \"api\";\n\n// Debug opcional\nmsg.payload = {\n    aqi: aqi_final,\n    pm25: pm25_final\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 260,
+        "wires": [
+            [
+                "debug_api",
+                "06f4389d233cc00e"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_in_sensor",
+        "type": "mqtt in",
+        "z": "tab_ar_sp",
+        "name": "Recebe ESP32",
+        "topic": "sp/sensor/umidade",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "broker_mosquitto",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 420,
+        "wires": [
+            [
+                "func_processa_sensor"
+            ]
+        ]
+    },
+    {
+        "id": "func_processa_sensor",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "Filtra Dados Arduino",
+        "func": "// msg.payload chega como string, converter para número\nlet umidade = parseFloat(msg.payload);\n\n// Verifica se é válido\nif (isNaN(umidade)) {\n    node.error(\"Valor de umidade inválido recebido: \" + msg.payload);\n    return null;\n}\n\n// Salva globalmente para a fusão\nglobal.set(\"last_sensor\", {\n    umidade: umidade\n});\n\n// Define o tópico para o JOIN\nmsg.topic = \"sensor\";\n\n// Debug opcional\nmsg.payload = {\n    umidade: umidade\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 420,
+        "wires": [
+            [
+                "debug_sensor",
+                "06f4389d233cc00e"
+            ]
+        ]
+    },
+    {
+        "id": "debug_api",
+        "type": "debug",
+        "z": "tab_ar_sp",
+        "name": "Debug API",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "debug_sensor",
+        "type": "debug",
+        "z": "tab_ar_sp",
+        "name": "Debug Sensor",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 680,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "influx_db_out",
+        "type": "influxdb out",
+        "z": "tab_ar_sp",
+        "influxdb": "83e2fdf4da74c275",
+        "name": "Salva no InfluxDB",
+        "measurement": "qualidade_ar_definitivo",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "Mackenzie",
+        "bucket": "qualidade_ar",
+        "x": 1190,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "1ffcb3921e6e9659",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "fields",
+        "func": "// Recupera dados salvos\nlet api = global.get(\"last_api\") || {};\nlet sensor = global.get(\"last_sensor\") || {};\n\nlet aqi = api.aqi;\nlet umidade = sensor.umidade;\n\n// Verifica se ambos chegaram\nif (aqi === undefined || umidade === undefined) {\n    node.warn(\"Dados ainda incompletos para fusão.\");\n    return null;\n}\n\n// -----------------------------\n// Lógica da qualidade final\n// -----------------------------\nlet qualidade_final = \"Bom\";\n\nif (aqi == 3 || umidade < 40 || umidade > 60) {\n    qualidade_final = \"Moderada\";\n}\n\nif (aqi >= 4 || umidade < 30 || umidade > 70) {\n    qualidade_final = \"Ruim\";\n}\n\n// -----------------------------\n// DEBUG FORMATADO EXATAMENTE COMO VOCÊ QUER\n// -----------------------------\nmsg.payload = {\n    umidade: umidade,\n    aqi: aqi,\n    qualidade_final: qualidade_final\n};\n\n// -----------------------------\n// PACOTE PARA O INFLUXDB\n// -----------------------------\nmsg.influx = [\n    {\n        measurement: \"qualidade_ar_sp\",\n        tags: {\n            fonte: \"fusao_api_sensor\",\n            cidade: \"Sao_Paulo\"\n        },\n        fields: {\n            umidade: umidade,\n            aqi: aqi,\n            qualidade_final: qualidade_final\n        }\n    }\n];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 360,
+        "wires": [
+            [
+                "influx_db_out",
+                "511d8eab59303488",
+                "b907a215d818799d"
+            ]
+        ]
+    },
+    {
+        "id": "a6d6893f1b777ff0",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "fields",
+        "func": "var dados = msg.payload.fields;\nvar tags = msg.payload.tags;\n\n// Define que o payload é APENAS os dados numéricos\nmsg.payload = dados;\n\n// Passa as tags separadas\nmsg.tags = tags;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 640,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "511d8eab59303488",
+        "type": "debug",
+        "z": "tab_ar_sp",
+        "name": "Debug",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1150,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "06f4389d233cc00e",
+        "type": "join",
+        "z": "tab_ar_sp",
+        "name": "juntar dados",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": true,
+        "timeout": "20",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 760,
+        "y": 360,
+        "wires": [
+            [
+                "1ffcb3921e6e9659"
+            ]
+        ]
+    },
+    {
+        "id": "b907a215d818799d",
+        "type": "function",
+        "z": "tab_ar_sp",
+        "name": "function 1",
+        "func": "// Recebe o resultado vindo da function final\nlet qualidade = msg.payload.qualidade_final;\n\n// Define o comando que será enviado ao atuador\nlet comando = \"\";\n\nswitch(qualidade) {\n    case \"Bom\":\n        comando = \"LED_VERDE\";\n        break;\n\n    case \"Moderada\":\n        comando = \"LED_AMARELO\";\n        break;\n\n    case \"Ruim\":\n        comando = \"LED_VERMELHO\";\n        break;\n\n    default:\n        comando = \"DESLIGAR\";\n}\n\n// Novo payload que irá para o Wokwi\nmsg.payload = comando;\n\n// Tópico para o atuador\nmsg.topic = \"sp/atuador/leds\";\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1180,
+        "y": 260,
+        "wires": [
+            [
+                "a0560b93eb58a36b"
+            ]
+        ]
+    },
+    {
+        "id": "a0560b93eb58a36b",
+        "type": "mqtt out",
+        "z": "tab_ar_sp",
+        "name": "Atuador",
+        "topic": "sp/atuador/leds",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "872fb0a6f9976cc4",
+        "x": 1380,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "broker_mosquitto",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Public",
+        "broker": "test.mosquitto.org",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "83e2fdf4da74c275",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "Caio",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "https://us-east-1-1.aws.cloud2.influxdata.com",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "872fb0a6f9976cc4",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "test.mosquitto.org",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "3dc9d2246464d4db",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-contrib-influxdb": "0.7.0"
+        }
+    }
+]
