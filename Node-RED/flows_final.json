@@ -16,8 +16,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 120,
-        "y": 260,
+        "x": 140,
+        "y": 220,
         "wires": [
             [
                 "http_openweather"
@@ -41,7 +41,7 @@
         "senderr": false,
         "headers": [],
         "x": 360,
-        "y": 260,
+        "y": 220,
         "wires": [
             [
                 "func_processa_api"
@@ -60,8 +60,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 650,
-        "y": 260,
+        "x": 620,
+        "y": 220,
         "wires": [
             [
                 "debug_api",
@@ -77,13 +77,13 @@
         "topic": "sp/sensor/umidade",
         "qos": "1",
         "datatype": "auto-detect",
-        "broker": "broker_mosquitto",
+        "broker": "872fb0a6f9976cc4",
         "nl": false,
         "rap": true,
         "rh": 0,
         "inputs": 0,
         "x": 120,
-        "y": 420,
+        "y": 480,
         "wires": [
             [
                 "func_processa_sensor"
@@ -95,7 +95,7 @@
         "type": "function",
         "z": "tab_ar_sp",
         "name": "Filtra Dados Arduino",
-        "func": "// msg.payload chega como string, converter para número\nlet umidade = parseFloat(msg.payload);\n\n// Verifica se é válido\nif (isNaN(umidade)) {\n    node.error(\"Valor de umidade inválido recebido: \" + msg.payload);\n    return null;\n}\n\n// Salva globalmente para a fusão\nglobal.set(\"last_sensor\", {\n    umidade: umidade\n});\n\n// Define o tópico para o JOIN\nmsg.topic = \"sensor\";\n\n// Debug opcional\nmsg.payload = {\n    umidade: umidade\n};\n\nreturn msg;\n",
+        "func": "// converter para número\nlet umidade = parseFloat(msg.payload);\n\n// Verifica se é válido\nif (isNaN(umidade)) {\n    node.error(\"Valor de umidade inválido recebido: \" + msg.payload);\n    return null;\n}\n\n// Salva para fundir\nglobal.set(\"last_sensor\", {\n    umidade: umidade\n});\n\n// Define o tópico para o JOIN\nmsg.topic = \"sensor\";\n\n// Debug opcional\nmsg.payload = {\n    umidade: umidade\n};\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": "",
         "noerr": 0,
@@ -103,7 +103,7 @@
         "finalize": "",
         "libs": [],
         "x": 340,
-        "y": 420,
+        "y": 480,
         "wires": [
             [
                 "debug_sensor",
@@ -124,8 +124,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 930,
-        "y": 260,
+        "x": 870,
+        "y": 220,
         "wires": []
     },
     {
@@ -141,8 +141,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 680,
-        "y": 420,
+        "x": 740,
+        "y": 480,
         "wires": []
     },
     {
@@ -159,8 +159,8 @@
         "retentionPolicyV18Flux": "",
         "org": "Mackenzie",
         "bucket": "qualidade_ar",
-        "x": 1190,
-        "y": 400,
+        "x": 1170,
+        "y": 460,
         "wires": []
     },
     {
@@ -168,14 +168,14 @@
         "type": "function",
         "z": "tab_ar_sp",
         "name": "fields",
-        "func": "// Recupera dados salvos\nlet api = global.get(\"last_api\") || {};\nlet sensor = global.get(\"last_sensor\") || {};\n\nlet aqi = api.aqi;\nlet umidade = sensor.umidade;\n\n// Verifica se ambos chegaram\nif (aqi === undefined || umidade === undefined) {\n    node.warn(\"Dados ainda incompletos para fusão.\");\n    return null;\n}\n\n// -----------------------------\n// Lógica da qualidade final\n// -----------------------------\nlet qualidade_final = \"Bom\";\n\nif (aqi == 3 || umidade < 40 || umidade > 60) {\n    qualidade_final = \"Moderada\";\n}\n\nif (aqi >= 4 || umidade < 30 || umidade > 70) {\n    qualidade_final = \"Ruim\";\n}\n\n// -----------------------------\n// DEBUG FORMATADO EXATAMENTE COMO VOCÊ QUER\n// -----------------------------\nmsg.payload = {\n    umidade: umidade,\n    aqi: aqi,\n    qualidade_final: qualidade_final\n};\n\n// -----------------------------\n// PACOTE PARA O INFLUXDB\n// -----------------------------\nmsg.influx = [\n    {\n        measurement: \"qualidade_ar_sp\",\n        tags: {\n            fonte: \"fusao_api_sensor\",\n            cidade: \"Sao_Paulo\"\n        },\n        fields: {\n            umidade: umidade,\n            aqi: aqi,\n            qualidade_final: qualidade_final\n        }\n    }\n];\n\nreturn msg;\n",
+        "func": "// Recupera dados salvos\nlet api = global.get(\"last_api\") || {};\nlet sensor = global.get(\"last_sensor\") || {};\n\nlet aqi = api.aqi;\nlet umidade = sensor.umidade;\n\n// Verifica se ambos chegaram\nif (aqi === undefined || umidade === undefined) {\n    node.warn(\"Dados ainda incompletos para fusão.\");\n    return null;\n}\n\n// Lógica da qualidade final\nlet qualidade_final = \"Bom\";\n\nif (aqi == 3 || umidade < 40 || umidade > 60) {\n    qualidade_final = \"Moderada\";\n}\n\nif (aqi >= 4 || umidade < 30 || umidade > 70) {\n    qualidade_final = \"Ruim\";\n}\n\n//Debug formatado\nmsg.payload = {\n    umidade: umidade,\n    aqi: aqi,\n    qualidade_final: qualidade_final\n};\n\n// Mensagem para o influx\nmsg.influx = [\n    {\n        measurement: \"qualidade_ar_sp\",\n        tags: {\n            fonte: \"fusao_api_sensor\",\n            cidade: \"Sao_Paulo\"\n        },\n        fields: {\n            umidade: umidade,\n            aqi: aqi,\n            qualidade_final: qualidade_final\n        }\n    }\n];\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 950,
+        "x": 910,
         "y": 360,
         "wires": [
             [
@@ -183,24 +183,6 @@
                 "511d8eab59303488",
                 "b907a215d818799d"
             ]
-        ]
-    },
-    {
-        "id": "a6d6893f1b777ff0",
-        "type": "function",
-        "z": "tab_ar_sp",
-        "name": "fields",
-        "func": "var dados = msg.payload.fields;\nvar tags = msg.payload.tags;\n\n// Define que o payload é APENAS os dados numéricos\nmsg.payload = dados;\n\n// Passa as tags separadas\nmsg.tags = tags;\n\nreturn msg;",
-        "outputs": 1,
-        "timeout": 0,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 570,
-        "y": 640,
-        "wires": [
-            []
         ]
     },
     {
@@ -216,8 +198,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1150,
-        "y": 340,
+        "x": 1130,
+        "y": 380,
         "wires": []
     },
     {
@@ -241,7 +223,7 @@
         "reduceInit": "",
         "reduceInitType": "",
         "reduceFixup": "",
-        "x": 760,
+        "x": 700,
         "y": 360,
         "wires": [
             [
@@ -254,15 +236,15 @@
         "type": "function",
         "z": "tab_ar_sp",
         "name": "function 1",
-        "func": "// Recebe o resultado vindo da function final\nlet qualidade = msg.payload.qualidade_final;\n\n// Define o comando que será enviado ao atuador\nlet comando = \"\";\n\nswitch(qualidade) {\n    case \"Bom\":\n        comando = \"LED_VERDE\";\n        break;\n\n    case \"Moderada\":\n        comando = \"LED_AMARELO\";\n        break;\n\n    case \"Ruim\":\n        comando = \"LED_VERMELHO\";\n        break;\n\n    default:\n        comando = \"DESLIGAR\";\n}\n\n// Novo payload que irá para o Wokwi\nmsg.payload = comando;\n\n// Tópico para o atuador\nmsg.topic = \"sp/atuador/leds\";\n\nreturn msg;\n",
+        "func": "// Recebe o resultado da ultima função\nlet qualidade = msg.payload.qualidade_final;\n\n// Define o que será enviado para o atuador\nlet comando = \"\";\n\nswitch(qualidade) {\n    case \"Bom\":\n        comando = \"LED_VERDE\";\n        break;\n\n    case \"Moderada\":\n        comando = \"LED_AMARELO\";\n        break;\n\n    case \"Ruim\":\n        comando = \"LED_VERMELHO\";\n        break;\n\n    default:\n        comando = \"DESLIGAR\";\n}\n\n// Payload que irá para o Wokwi\nmsg.payload = comando;\n\n// Tópico para o atuador\nmsg.topic = \"sp/atuador/leds\";\n\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1180,
-        "y": 260,
+        "x": 1140,
+        "y": 280,
         "wires": [
             [
                 "a0560b93eb58a36b"
@@ -283,51 +265,9 @@
         "correl": "",
         "expiry": "",
         "broker": "872fb0a6f9976cc4",
-        "x": 1380,
-        "y": 260,
+        "x": 1320,
+        "y": 280,
         "wires": []
-    },
-    {
-        "id": "broker_mosquitto",
-        "type": "mqtt-broker",
-        "name": "Mosquitto Public",
-        "broker": "test.mosquitto.org",
-        "port": "1883",
-        "clientid": "",
-        "autoConnect": true,
-        "usetls": false,
-        "protocolVersion": "4",
-        "keepalive": "60",
-        "cleansession": true,
-        "birthTopic": "",
-        "birthQos": "0",
-        "birthPayload": "",
-        "birthMsg": {},
-        "closeTopic": "",
-        "closeQos": "0",
-        "closePayload": "",
-        "closeMsg": {},
-        "willTopic": "",
-        "willQos": "0",
-        "willPayload": "",
-        "willMsg": {},
-        "userProps": "",
-        "sessionExpiry": ""
-    },
-    {
-        "id": "83e2fdf4da74c275",
-        "type": "influxdb",
-        "hostname": "127.0.0.1",
-        "port": 8086,
-        "protocol": "http",
-        "database": "database",
-        "name": "Caio",
-        "usetls": false,
-        "tls": "",
-        "influxdbVersion": "2.0",
-        "url": "https://us-east-1-1.aws.cloud2.influxdata.com",
-        "timeout": 10,
-        "rejectUnauthorized": true
     },
     {
         "id": "872fb0a6f9976cc4",
@@ -361,7 +301,22 @@
         "sessionExpiry": ""
     },
     {
-        "id": "3dc9d2246464d4db",
+        "id": "83e2fdf4da74c275",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": 8086,
+        "protocol": "http",
+        "database": "database",
+        "name": "Caio",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "https://us-east-1-1.aws.cloud2.influxdata.com",
+        "timeout": 10,
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "7c3e8d1c0c2ca423",
         "type": "global-config",
         "env": [],
         "modules": {
