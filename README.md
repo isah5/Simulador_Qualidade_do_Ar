@@ -20,8 +20,6 @@ Coleta Híbrida: Recebe dados tanto de sensores físicos (simulados) quanto de f
 
 Semáforo de Qualidade: Classificação automática do ar em "Bom", "Moderado" ou "Ruim" baseada no índice AQI.
 
-Alertas: Envio de comandos de alerta para o dispositivo IoT em casos críticos.
-
 Dashboard: Monitoramento visual com histórico e indicadores em tempo real.
 
  Referências Bibliográficas
