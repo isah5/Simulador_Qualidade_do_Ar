@@ -2,15 +2,15 @@
 #include <PubSubClient.h>
 #include "DHTesp.h"
 
-// ======== SENSOR =======
+//SENSOR 
 DHTesp dht;
 const int DHT_PIN = 15; // Pino do DHT22 no Wokwi
 
-// ======== REDE WIFI (Wokwi) ========
+//REDE WIFI (Wokwi)
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 
-// ======== MQTT ========
+//MQTT
 const char* mqtt_server = "test.mosquitto.org";
 const int mqtt_port = 1883;
 
@@ -22,7 +22,6 @@ PubSubClient client(espClient);
 
 unsigned long lastMsg = 0;
 
-// ---------------------------------------------------------
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -42,7 +41,6 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-// ---------------------------------------------------------
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Mensagem recebida no tópico: ");
   Serial.print(topic);
@@ -56,8 +54,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   Serial.println(msg);
 
 }
-
-// ---------------------------------------------------------
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Conectando ao broker MQTT... ");
@@ -77,7 +73,6 @@ void reconnect() {
   }
 }
 
-// ---------------------------------------------------------
 void setup() {
   Serial.begin(115200);
   setup_wifi();
@@ -88,7 +83,6 @@ void setup() {
   dht.setup(DHT_PIN, DHTesp::DHT22);
 }
 
-// ---------------------------------------------------------
 void loop() {
   if (!client.connected()) reconnect();
   client.loop();
