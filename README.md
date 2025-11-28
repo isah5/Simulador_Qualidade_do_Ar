@@ -19,6 +19,7 @@ ESP32 (ATUADOR): Receptor de dados de sensores via MQTT.
 
 
 ESP32 (SENSOR): Coletor de dados de sensores via MQTT.
+
 <img width="827" height="770" alt="image" src="https://github.com/user-attachments/assets/b1a74348-3071-4feb-9a3b-0ba206290f4c" />
 
 
