@@ -6,13 +6,26 @@ Este projeto visa monitorar a qualidade do ar na cidade de São Paulo utilizando
 
 Node-RED: Orquestração do fluxo de dados e regras de negócio (Low-code).
 
-ESP32 (Simulado): Coleta de dados de sensores via MQTT.
+![Imagem do WhatsApp de 2025-11-24 à(s) 02 45 02_6e7623dd](https://github.com/user-attachments/assets/5604f084-9f01-466e-b231-e389a3b4bf95)
+
 
 OpenWeather API: Fonte de dados meteorológicos e de poluição em tempo real.
 
 InfluxDB: Banco de dados temporal para armazenamento histórico.
 
+ESP32 (ATUADOR): Receptor de dados de sensores via MQTT.
+
+![Imagem do WhatsApp de 2025-11-24 à(s) 02 45 25_4c72a8ec](https://github.com/user-attachments/assets/91601f00-b6da-4431-bc05-695d9f0e9c93)
+
+
+ESP32 (SENSOR): Coletor de dados de sensores via MQTT.
+<img width="827" height="770" alt="image" src="https://github.com/user-attachments/assets/b1a74348-3071-4feb-9a3b-0ba206290f4c" />
+
+
 Grafana: Visualização de dados (Dashboards).
+
+![Imagem do WhatsApp de 2025-11-24 à(s) 02 45 15_059b1764](https://github.com/user-attachments/assets/e45c524a-1b07-4f86-bdab-58824ad1b2a9)
+
 
 Funcionalidades
 
@@ -22,32 +35,6 @@ Semáforo de Qualidade: Classificação automática do ar em "Bom", "Moderado" o
 
 Dashboard: Monitoramento visual com histórico e indicadores em tempo real.
 
- Referências Bibliográficas
 
-As referências abaixo foram utilizadas para embasar os critérios de classificação da qualidade do ar e o alinhamento com objetivos de sustentabilidade globais.
 
-1. Padrões de Qualidade do Ar (Fonte Oficial)
 
-Base para a classificação (Bom/Moderado/Ruim) utilizada no sistema.
-
-CETESB. Padrões de Qualidade do Ar. São Paulo: Companhia Ambiental do Estado de São Paulo. Disponível em: https://cetesb.sp.gov.br/ar/padroes-de-qualidade-do-ar/. Acesso em: 20 nov. 2025.
-
-2. Contexto Local (São Paulo)
-
-Dados sobre a poluição veicular e industrial específica de SP.
-
-IEMA. Qualidade do Ar no Município de São Paulo: Nota Técnica. São Paulo: Instituto de Energia e Meio Ambiente, 2022. Disponível em: https://energiaeambiente.org.br/wp-content/uploads/2022/05/IEMA_notatecnica_aremSP.pdf. Acesso em: 20 nov. 2025.
-
-3. Objetivos de Desenvolvimento Sustentável (ONU)
-
-Justificativa social do projeto (ODS 3 e 11).
-
-ONU. Objetivo de Desenvolvimento Sustentável 3: Saúde e Bem-estar. Nações Unidas Brasil. Disponível em: https://brasil.un.org/pt-br/sdgs/3. Acesso em: 20 nov. 2025.
-
-ONU. Objetivo de Desenvolvimento Sustentável 11: Cidades e Comunidades Sustentáveis. Nações Unidas Brasil. Disponível em: https://brasil.un.org/pt-br/sdgs/11. Acesso em: 20 nov. 2025.
-
-4. Impactos na Saúde
-
-Referência global sobre como a poluição afeta a saúde humana.
-
-WORLD HEALTH ORGANIZATION (WHO). Ambient (outdoor) air pollution. 2024. Disponível em: https://www.who.int/news-room/fact-sheets/detail/ambient-(outdoor)-air-pollution. Acesso em: 20 nov. 2025.
