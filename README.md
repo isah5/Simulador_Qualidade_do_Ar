@@ -28,7 +28,7 @@ As referências abaixo foram utilizadas para embasar os critérios de classifica
 
 1. Padrões de Qualidade do Ar (Fonte Oficial)
 
-Base para a classificação (Bom/Ruim) utilizada no sistema.
+Base para a classificação (Bom/Moderado/Ruim) utilizada no sistema.
 
 CETESB. Padrões de Qualidade do Ar. São Paulo: Companhia Ambiental do Estado de São Paulo. Disponível em: https://cetesb.sp.gov.br/ar/padroes-de-qualidade-do-ar/. Acesso em: 20 nov. 2025.
 
